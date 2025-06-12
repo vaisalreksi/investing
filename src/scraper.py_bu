@@ -1,0 +1,97 @@
+import os
+import time
+import random
+import undetected_chromedriver as uc
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from bs4 import BeautifulSoup
+from datetime import datetime
+import pandas as pd
+from dotenv import load_dotenv
+import requests
+from apscheduler.schedulers.blocking import BlockingScheduler
+
+class CommodityScraper:
+    def __init__(self):
+        self.url = "https://www.investing.com/commodities/real-time-futures"
+        # self.url = os.getenv('INVESTING_URL')https://www.investing.com/commodities/real-time-futures
+        self.headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+            'Cache-Control': 'max-age=0'
+        }
+
+    def get_data(self):
+        try:
+            # Add a delay between requests to avoid rate limiting
+            time.sleep(random.uniform(1, 3))
+            
+            session = requests.Session()
+            response = session.get(
+                self.url,
+                headers=self.headers,
+                timeout=30,
+                verify=True
+            )
+            
+            if response.status_code == 403:
+                print(f"Access denied. Status code: {response.status_code}")
+                print(f"Response headers: {response.headers}")
+                return None
+                
+            soup = BeautifulSoup(response.text, 'html.parser')
+            
+            # Extract data from different tabs
+            price_data = self._extract_price_data(soup)
+            performance_data = self._extract_performance_data(soup)
+            technical_data = self._extract_technical_data(soup)
+            specifications_data = self._extract_specifications_data(soup)
+
+            # Combine all data
+            all_data = {
+                **price_data,
+                **performance_data,
+                **technical_data,
+                **specifications_data,
+                'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            }
+
+            return all_data
+
+        except Exception as e:
+            print(f"Error scraping data: {str(e)}")
+            return None
+
+    def _extract_price_data(self, soup):
+        try:
+            # Implement the actual extraction logic based on the page structure
+            # This is a placeholder - you'll need to update with actual selectors
+            table = soup.find('table', {'class': 'price-table'})
+            if table:
+                # Extract and process price data
+                return {'price': 'extracted_price'}
+            return {'price': None}
+        except Exception as e:
+            print(f"Error extracting price data: {str(e)}")
+            return {'price': None}
+
+    def _extract_performance_data(self, soup):
+        # Implement performance data extraction
+        return {'performance': None}
+
+    def _extract_technical_data(self, soup):
+        # Implement technical data extraction
+        return {'technical': None}
+
+    def _extract_specifications_data(self, soup):
+        # Implement specifications data extraction
+        return {'specifications': None}
